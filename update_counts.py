@@ -17,7 +17,7 @@ SAVE_CACHE_INV_FREQ = 50
 
 core_stream_regex = "Core::Stream"
 core_file_regex = "(CFile|Core::File)([&>]|::(open|construct))" # technically there's also try_create() from C_OBJECT macro but thanks god nobody used it
-ak_stream_regex = "(Input|Output|(Circular)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
+ak_stream_regex = "(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
 
 core_stream_ignored_files = [ "Tests/LibCore/TestLibCoreStream.cpp" ]
 core_file_ignored_files = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
