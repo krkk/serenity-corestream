@@ -194,7 +194,7 @@ def write_graphs(most_recent_commit):
                 set style fill solid;
                 set xzeroaxis;
 
-                set style data lines;
+                set style data steps;
                 set terminal pngcairo size 1800,600 enhanced;
                 set xdata time;
                 set grid xtics;
