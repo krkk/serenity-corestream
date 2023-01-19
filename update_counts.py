@@ -148,7 +148,7 @@ def write_graphs(most_recent_commit):
            using 1:2 lw 2 title "Core::Stream", \
         '' using 1:3 lw 1 title "Core::File", \
         '' using 1:4 lw 1 title "AK::Stream", \
-        '' using 1:5 lw 1 title "C FILE*^†", \
+        '' using 1:5 lw 1 title "C FILE*", \
         '< tail -n 1 tagged_history.csv' using 1:2:2 with labels point pointtype 7 offset 1,char -.75 notitle, \
         '< tail -n 1 tagged_history.csv' using 1:3:3 with labels point pointtype 7 offset 1,char 0.5 notitle, \
         '< tail -n 1 tagged_history.csv' using 1:4:4 with labels point pointtype 7 offset 1,char 0.5 notitle
