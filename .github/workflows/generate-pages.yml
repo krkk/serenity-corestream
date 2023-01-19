@@ -48,7 +48,7 @@ jobs:
         key: ${{ runner.os }}-serenity
 
     - name: Clone Serenity
-      if: steps.cache-serenity.restore.outputs.cache-hit != 'true'
+      if: steps.cache-serenity-restore.outputs.cache-hit != 'true'
       run: git clone https://github.com/serenityos/serenity
 
     - name: Build site
