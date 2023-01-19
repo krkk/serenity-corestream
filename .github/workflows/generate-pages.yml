@@ -1,0 +1,79 @@
+name: Generate and deploy to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v2
+
+    - name: Install gnuplot
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gnuplot
+
+    - name: Restore cached serenity repo and graph data
+      id: cache-serenity-restore
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+          serenity
+          cache.json
+        key: ${{ runner.os }}-serenity
+
+    - name: Clone Serenity
+      if: steps.cache-serenity.restore.outputs.cache-hit != 'true'
+      run: git clone https://github.com/serenityos/serenity
+
+    - name: Build site
+      run: |
+        ./update_counts.py
+        mkdir ./_site
+        cp index.html *.png tagged_history.* cache.json ./_site/
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
+
+    - name: Cache serenity repo and graph data
+      uses: actions/cache/save@v3
+      with:
+        path: |
+          serenity
+          cache.json
+        key: ${{ steps.cache-serenity-restore.outputs.cache-primary-key }}
+
+  # Deployment job
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
