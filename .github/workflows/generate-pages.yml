@@ -5,6 +5,9 @@ on:
   push:
     branches: ["main"]
 
+  schedule:
+    - cron: "0 6 * * *" # run at 6 AM UTC to wake me up if build fails
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
