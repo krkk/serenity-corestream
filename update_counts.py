@@ -14,14 +14,15 @@ FILENAME_CACHE_COLD = "cache_cold.json"
 # Save the cache only every X commits, instead of after every commit.
 SAVE_CACHE_INV_FREQ = 50
 
+CORE_STREAM_REGEX = "Core::Stream"
+CORE_FILE_REGEX = "(CFile|Core::File)([&>]|::(open|construct))" # there's also try_create() from C_OBJECT macro but thank god nobody used it
+AK_STREAM_REGEX = "(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
+C_FILE_REGEX = "fopen\\(|fdopen\\(|FILE\\*" # not accounting for stdout, stderr and stdin
 
-core_stream_regex = "Core::Stream"
-core_file_regex = "(CFile|Core::File)([&>]|::(open|construct))" # technically there's also try_create() from C_OBJECT macro but thanks god nobody used it
-ak_stream_regex = "(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
-
-core_stream_ignored_files = [ "Tests/LibCore/TestLibCoreStream.cpp" ]
-core_file_ignored_files = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
-ak_stream_ignored_files = [ "AK", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/FileStream.h" ]
+CORE_STREAM_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreStream.cpp" ]
+CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
+AK_STREAM_IGNORED_FILES = [ "AK", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/FileStream.h" ]
+C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
 
 def fetch_new():
@@ -35,10 +36,10 @@ def determine_commit_and_date_list():
             "-C",
             SERENITY_DIR,
             "log",
-            # list through commits that actually matched that regex.
-            # this makes the cache size MUCH smaller (needs to store ~750 commits instead of a full history - 45k).
-            # however, the script startup time is now much longer.
-            f"-G{core_stream_regex}|{core_file_regex}|{ak_stream_regex}"
+            # generate a list of commits that match our regexes
+            # this makes the cache size MUCH smaller (needs to store ~1000 commits instead of a full commit history - 45k).
+            # however, the script startup time is slow.
+            f"-G{CORE_STREAM_REGEX}|{CORE_FILE_REGEX}|{AK_STREAM_REGEX}|{CORE_FILE_REGEX}|{C_FILE_REGEX}"
             "origin/master",
             "--reverse",
             "--format=%H %ct",
@@ -61,14 +62,17 @@ def determine_commit_and_date_list():
 
 
 def load_cache():
-    if not os.path.exists(FILENAME_CACHE):
+    if os.path.exists(FILENAME_CACHE):
+        with open(FILENAME_CACHE, "r") as fp:
+            cache = json.load(fp)
+    elif os.path.exists(FILENAME_CACHE_COLD):
         with open(FILENAME_CACHE_COLD, "r") as fp:
             cache = json.load(fp)
         # Make sure it's writable:
         save_cache(cache)
     else:
-        with open(FILENAME_CACHE, "r") as fp:
-            cache = json.load(fp)
+        print(f"Couldn't find cache file. Regenerating the whole data instead...")
+        cache = {}
     return cache
 
 
@@ -77,7 +81,7 @@ def save_cache(cache):
         json.dump(cache, fp, sort_keys=True, separators=",:", indent=0)
 
 
-def count_commit_occurences(regex_search, ignored_files):
+def count_repo_occurrences(regex_search, ignored_files):
     result = subprocess.run(
         ["git", "-C", SERENITY_DIR, "grep", "-wE", regex_search, "--" ] + list(map(lambda x: f":!{x}", ignored_files)),
         capture_output=True,
@@ -90,15 +94,16 @@ def count_commit_occurences(regex_search, ignored_files):
 
 def lookup_commit(commit, date, cache):
     if commit in cache:
-        stream_file, core_file, ak_stream = cache[commit]
+        stream_file, core_file, ak_stream, c_file = cache[commit]
     else:
         time_start = time.time()
         subprocess.run(["git", "-C", SERENITY_DIR, "checkout", "-q", commit], check=True)
-        stream_file = count_commit_occurences(core_stream_regex, core_stream_ignored_files)
-        core_file = count_commit_occurences(core_file_regex, core_file_ignored_files)
-        ak_stream = count_commit_occurences(ak_stream_regex, ak_stream_ignored_files)
+        stream_file = count_repo_occurrences(CORE_STREAM_REGEX, CORE_STREAM_IGNORED_FILES)
+        core_file = count_repo_occurrences(CORE_FILE_REGEX, CORE_FILE_IGNORED_FILES)
+        ak_stream = count_repo_occurrences(AK_STREAM_REGEX, AK_STREAM_IGNORED_FILES)
+        c_file = count_repo_occurrences(C_FILE_REGEX, C_FILE_IGNORED_FILES)
         time_done_counting = time.time()
-        cache[commit] = stream_file, core_file, ak_stream
+        cache[commit] = stream_file, core_file, ak_stream, c_file
         if len(cache) % SAVE_CACHE_INV_FREQ == 0:
             print("    (actually saving cache)")
             save_cache(cache)
@@ -116,6 +121,7 @@ def lookup_commit(commit, date, cache):
         stream_file=stream_file,
         core_file=core_file,
         ak_stream=ak_stream,
+        c_file=c_file,
     )
 
 
@@ -142,6 +148,7 @@ def write_graphs(most_recent_commit):
            using 1:2 lw 2 title "Core::Stream", \
         '' using 1:3 lw 1 title "Core::File", \
         '' using 1:4 lw 1 title "AK::Stream", \
+        '' using 1:5 lw 1 title "C FILE*^†", \
         '< tail -n 1 tagged_history.csv' using 1:2:2 with labels point pointtype 7 offset 1,char -.75 notitle, \
         '< tail -n 1 tagged_history.csv' using 1:3:3 with labels point pointtype 7 offset 1,char 0.5 notitle, \
         '< tail -n 1 tagged_history.csv' using 1:4:4 with labels point pointtype 7 offset 1,char 0.5 notitle
@@ -237,9 +244,7 @@ def run():
         json.dump(tagged_commits, fp, sort_keys=True, indent=1)
     with open(FILENAME_CSV, "w") as fp:
         for entry in tagged_commits:
-            if entry is None:
-                continue
-            fp.write(f"{entry['unix_timestamp']},{entry['stream_file']},{entry['core_file']},{entry['ak_stream']}\n")
+            fp.write(f"{entry['unix_timestamp']},{entry['stream_file']},{entry['core_file']},{entry['ak_stream']},{entry['c_file']}\n")
     write_graphs(commits_and_dates[-1][1])
 
 if __name__ == "__main__":

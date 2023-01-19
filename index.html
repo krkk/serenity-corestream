@@ -11,6 +11,10 @@ img { max-width: 100% }
 <h2 id=total>Total</h2>
 <img src=output_total.png>
 
+<p>† – FILE* usage is definited by counting FILE*s, together with fopen, fdopen calls.
+  Please note there’s also stdout, stderr and stdin that’s missing from the graph.
+  However I didn’t include them to better match with other lines (that also counts by constructors and references) and not to <em>explode</em> the graph.
+
 <h2 id=year>Last 366 days</h2>
 <img src=output_year.png>
 <img src=output_year_delta.png>
@@ -26,12 +30,12 @@ img { max-width: 100% }
 <div class=text-stuff>
   <h2 id=downloads>Downloads</h2>
   <p>
-    You can download the <a href=tagged_history.csv>raw CSV data (about 16 KiB)</a> used for these diagrams.
-    You can also download a <a href=tagged_history.json>JSON version with slightly more data (about 150 KiB, contains commit hash and human-readable timestamp)</a>.
+    You can download the <a href=tagged_history.csv>raw CSV data (about 24 KiB)</a> used for these diagrams.
+    You can also download a <a href=tagged_history.json>JSON version with slightly more data (about 200 KiB, contains commit hash and human-readable timestamp)</a>.
     WARNING: Your browser will try to open and display it directly, which may be annoying.
   <p>
     You can tinker with this code at the <a href="https://github.com/krkk/serenity-corestream">Github repository</a>.
-    If you want to hot-start your cache, you can use the <a href=cache.json>hot cache used to generate above plots (about 50 KiB)</a>.
+    If you want to hot-start your cache, you can use the <a href=cache.json>hot cache used to generate above plots (about 60 KiB)</a>.
 
   <h2>License stuff</h2>
   <p>
