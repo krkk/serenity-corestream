@@ -10,7 +10,6 @@ SERENITY_DIR = "serenity/"
 FILENAME_JSON = "tagged_history.json"
 FILENAME_CSV = "tagged_history.csv"
 FILENAME_CACHE = "cache.json"
-FILENAME_CACHE_COLD = "cache_cold.json"
 # Save the cache only every X commits, instead of after every commit.
 SAVE_CACHE_INV_FREQ = 50
 
@@ -65,11 +64,6 @@ def load_cache():
     if os.path.exists(FILENAME_CACHE):
         with open(FILENAME_CACHE, "r") as fp:
             cache = json.load(fp)
-    elif os.path.exists(FILENAME_CACHE_COLD):
-        with open(FILENAME_CACHE_COLD, "r") as fp:
-            cache = json.load(fp)
-        # Make sure it's writable:
-        save_cache(cache)
     else:
         print(f"Couldn't find cache file. Regenerating the whole data instead...")
         cache = {}
