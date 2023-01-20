@@ -2,5 +2,6 @@ cache.json
 tagged_history.csv
 tagged_history.json
 output_*.png
+index.html
 __pycache__
 /serenity

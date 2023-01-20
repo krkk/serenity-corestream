@@ -4,12 +4,34 @@
 html { font-family: sans-serif }
 img { max-width: 100% }
 .text-stuff { max-width: 50em; margin: auto }
+
+.center { text-align: center }
+.file {
+    max-width: 20em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    direction: rtl;
+}
+
+.streams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2em;
+    justify-content: space-evenly;
+    max-height: 50vh;
+    overflow: auto;
+}
 </style>
 
 <h1>Are we Core::Stream yet?</h1>
 
 <h2 id=total>Total</h2>
 <img src=output_total.png>
+
+<p><details open><summary>Files using old apis</summary>
+<!-- REPLACE ME -->
+</details>
 
 <h2 id=year>Last 366 days</h2>
 <img src=output_year.png>

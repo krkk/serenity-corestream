@@ -23,6 +23,8 @@ CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
 AK_STREAM_IGNORED_FILES = [ "AK", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/FileStream.h" ]
 C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
+VIEW_FILE_URL = "https://github.com/SerenityOS/serenity/blob/master/"
+
 
 def fetch_new():
     subprocess.run(["git", "-C", SERENITY_DIR, "fetch"], check=True)
@@ -84,6 +86,18 @@ def count_repo_occurrences(regex_search, ignored_files):
     lines = result.stdout.split("\n")
     assert lines[-1] == "", result.stdout[-10:]
     return len(lines) - 1
+
+
+def count_file_occurrences(regex_search, ignored_files):
+    result = subprocess.run(
+        ["git", "-C", SERENITY_DIR, "grep", "-wcE", regex_search, "--" ] + list(map(lambda x: f":!{x}", ignored_files)),
+        capture_output=True,
+        text=True,
+    )
+    lines = result.stdout.split("\n")
+    assert lines[-1] == "", result.stdout[-10:]
+    dictionary = dict(x.split(':') for x in lines[:-1])
+    return sorted(dictionary.items(), key=lambda x: int(x[1]), reverse=True)
 
 
 def lookup_commit(commit, date, cache):
@@ -215,6 +229,30 @@ def write_graphs(most_recent_commit):
     )
 
 
+def build_table(name, data):
+    text = "<div>"
+    text += f"<h3 class=center>{name}</h3>"
+    text += "<table><tr><th>File<th>Count"
+    for file, count in data:
+        text += f"<tr><td class=file><a href='{VIEW_FILE_URL}/{file}'>{file}</a><td>{count}\n"
+    text += "</table></div>"
+    return text
+
+
+def write_file_list():
+    with open("index.template.html", "r") as fp:
+        template = fp.read()
+
+    text = "<div class=streams>"
+    text += build_table("Core::File", count_file_occurrences(CORE_FILE_REGEX, CORE_FILE_IGNORED_FILES))
+    text += build_table("AK::Stream", count_file_occurrences(AK_STREAM_REGEX, AK_STREAM_IGNORED_FILES))
+    text += build_table("C FILE*", count_file_occurrences(C_FILE_REGEX, C_FILE_IGNORED_FILES))
+    text += "</div>"
+
+    with open("index.html", "w") as fp:
+        fp.write(template.replace('<!-- REPLACE ME -->', text))
+
+
 def run():
     if not os.path.exists(SERENITY_DIR + "README.md"):
         print(
@@ -240,6 +278,7 @@ def run():
         for entry in tagged_commits:
             fp.write(f"{entry['unix_timestamp']},{entry['stream_file']},{entry['core_file']},{entry['ak_stream']},{entry['c_file']}\n")
     write_graphs(commits_and_dates[-1][1])
+    write_file_list()
 
 if __name__ == "__main__":
     run()
