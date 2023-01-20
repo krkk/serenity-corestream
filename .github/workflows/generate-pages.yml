@@ -38,18 +38,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gnuplot
 
-    - name: Restore cached serenity repo and graph data
-      id: cache-serenity-restore
+    - name: Restore graph data
+      id: cache-graph-restore
       uses: actions/cache/restore@v3
       with:
-        path: |
-          serenity
-          cache.json
-        key: ${{ runner.os }}-serenity
+        path: cache.json
+        key: cache-
 
-    - name: Clone Serenity
-      if: steps.cache-serenity-restore.outputs.cache-hit != 'true'
-      run: git clone https://github.com/serenityos/serenity
+    - name: Checkout SerenityOS/serenity
+      uses: actions/checkout@v2
+      with:
+        repository: SerenityOS/serenity
+        path: serenity
+        fetch-depth: 0
 
     - name: Build site
       run: |
@@ -57,16 +58,14 @@ jobs:
         mkdir ./_site
         cp index.html *.png tagged_history.* cache.json ./_site/
 
-    - name: Upload artifact
+    - name: Upload pages artifact
       uses: actions/upload-pages-artifact@v1
 
-    - name: Cache serenity repo and graph data
+    - name: Cache graph data
       uses: actions/cache/save@v3
       with:
-        path: |
-          serenity
-          cache.json
-        key: ${{ steps.cache-serenity-restore.outputs.cache-primary-key }}
+        path: cache.json
+        key: cache-${{ github.run_id }}
 
   # Deployment job
   deploy:
