@@ -46,7 +46,7 @@ jobs:
         key: cache-
 
     - name: Checkout SerenityOS/serenity
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: SerenityOS/serenity
         path: serenity
