@@ -23,7 +23,7 @@ CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
 AK_STREAM_IGNORED_FILES = [ "AK", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/FileStream.h" ]
 C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
-VIEW_FILE_URL = "https://github.com/SerenityOS/serenity/blob/master/"
+VIEW_FILE_URL = "https://github.com/SerenityOS/serenity/blob/master"
 
 
 def fetch_new():
