@@ -16,7 +16,7 @@ SAVE_CACHE_INV_FREQ = 50
 CORE_STREAM_REGEX = "Core::Stream"
 CORE_FILE_REGEX = "(CFile|Core::File)([&>]|::(open|construct))" # there's also try_create() from C_OBJECT macro but thank god nobody used it
 AK_STREAM_REGEX = "(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
-C_FILE_REGEX = "fopen\\(|fdopen\\(|FILE\\*" # not accounting for stdout, stderr and stdin
+C_FILE_REGEX = "fopen|fdopen|FILE\\*" # don't count stdout, stderr and stdin. there's too much of them
 
 CORE_STREAM_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreStream.cpp" ]
 CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
