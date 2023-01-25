@@ -167,7 +167,8 @@ def write_graphs(most_recent_commit):
         "tagged_history.csv" \
            using 1:(delta_v($2)) with boxes title "Core::Stream", \
         '' using 1:(delta_v($3)) with boxes title "Core::File", \
-        '' using 1:(delta_v($4)) with boxes title "AK::Stream"
+        '' using 1:(delta_v($4)) with boxes title "AK::Stream", \
+        '' using 1:(delta_v($5)) with boxes title "C FILE*"
     """
 
     if most_recent_commit > time_last_week:
@@ -222,6 +223,7 @@ def write_graphs(most_recent_commit):
                 plot {print_lines};
 
                 set terminal pngcairo size 900,300 enhanced;
+                set key left top font ",8";
                 {timed_plot_commands}
             """,
         ],
