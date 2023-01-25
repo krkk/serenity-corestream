@@ -233,7 +233,7 @@ def write_graphs(most_recent_commit):
 
 def build_table(name, data):
     text = "<div>"
-    text += f"<h3 class=center>{name}</h3>"
+    text += f"<h3>{name}</h3>"
     text += "<table><tr><th>File<th>Count"
     for file, count in data:
         text += f"<tr><td class=file><a href='{VIEW_FILE_URL}/{file}'>{file}</a><td>{count}\n"
