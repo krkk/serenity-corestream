@@ -275,6 +275,9 @@ def run():
     with open(FILENAME_JSON, "w") as fp:
         json.dump(tagged_commits, fp, sort_keys=True, indent=1)
     with open(FILENAME_CSV, "w") as fp:
+        # Add a fake commit at current time to make gnuplot draw a line between last commit and now
+        tagged_commits.append({ **tagged_commits[-1], 'unix_timestamp': int(time.time()) })
+
         for entry in tagged_commits:
             fp.write(f"{entry['unix_timestamp']},{entry['stream_file']},{entry['core_file']},{entry['ak_stream']},{entry['c_file']}\n")
     write_graphs(commits_and_dates[-1][1])
