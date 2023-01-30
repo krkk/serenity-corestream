@@ -13,14 +13,14 @@ FILENAME_CACHE = "cache.json"
 # Save the cache only every X commits, instead of after every commit.
 SAVE_CACHE_INV_FREQ = 50
 
-CORE_STREAM_REGEX = "Core::Stream"
+CORE_STREAM_REGEX = "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream"
 CORE_FILE_REGEX = "(CFile|Core::File)([&>]|::(open|construct))" # there's also try_create() from C_OBJECT macro but thank god nobody used it
-AK_STREAM_REGEX = "(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
+AK_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
 C_FILE_REGEX = "fopen|fdopen|FILE\\*" # don't count stdout, stderr and stdin. there's too much of them
 
-CORE_STREAM_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreStream.cpp" ]
+CORE_STREAM_IGNORED_FILES = [ "AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "Tests/AK/*Stream.cpp", "Tests/LibCore/*Stream.cpp", "AK/Forward.h" ]
 CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
-AK_STREAM_IGNORED_FILES = [ "AK", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/FileStream.h" ]
+AK_STREAM_IGNORED_FILES = [ "AK/*Stream.*", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "AK/Forward.h", "Ports", "*.java", "*.dockerfile" ]
 C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
 VIEW_FILE_URL = "https://github.com/SerenityOS/serenity/blob/master"
