@@ -13,14 +13,14 @@ FILENAME_CACHE = "cache.json"
 # Save the cache only every X commits, instead of after every commit.
 SAVE_CACHE_INV_FREQ = 50
 
-CORE_STREAM_REGEX = "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream"
+AK_STREAM_REGEX = "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream"
 CORE_FILE_REGEX = "(CFile|Core::File)([&>]|::(open|construct))" # there's also try_create() from C_OBJECT macro but thank god nobody used it
-AK_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
+AK_DEPRECATED_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
 C_FILE_REGEX = "fopen|fdopen|FILE\\*" # don't count stdout, stderr and stdin. there's too much of them
 
-CORE_STREAM_IGNORED_FILES = [ "AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "Tests/AK/*Stream.cpp", "Tests/LibCore/*Stream.cpp", "AK/Forward.h" ]
+AK_STREAM_IGNORED_FILES = [ "AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "Tests/AK/*Stream.cpp", "Tests/LibCore/*Stream.cpp", "AK/Forward.h" ]
 CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
-AK_STREAM_IGNORED_FILES = [ "AK/*Stream.*", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "AK/Forward.h", "Ports", "*.java", "*.dockerfile" ]
+AK_DEPRECATED_STREAM_IGNORED_FILES = [ "AK/*Stream.*", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "AK/Forward.h", "Ports", "*.java", "*.dockerfile" ]
 C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
 VIEW_FILE_URL = "https://github.com/SerenityOS/serenity/blob/master"
@@ -40,7 +40,7 @@ def determine_commit_and_date_list():
             # generate a list of commits that match our regexes
             # this makes the cache size MUCH smaller (needs to store ~1000 commits instead of a full commit history - 45k).
             # however, the script startup time is slow.
-            f"-G{CORE_STREAM_REGEX}|{CORE_FILE_REGEX}|{AK_STREAM_REGEX}|{CORE_FILE_REGEX}|{C_FILE_REGEX}"
+            f"-G{AK_STREAM_REGEX}|{CORE_FILE_REGEX}|{AK_DEPRECATED_STREAM_REGEX}|{CORE_FILE_REGEX}|{C_FILE_REGEX}"
             "origin/master",
             "--reverse",
             "--format=%H %ct",
@@ -106,9 +106,9 @@ def lookup_commit(commit, date, cache):
     else:
         time_start = time.time()
         subprocess.run(["git", "-C", SERENITY_DIR, "checkout", "-q", commit], check=True)
-        stream_file = count_repo_occurrences(CORE_STREAM_REGEX, CORE_STREAM_IGNORED_FILES)
+        stream_file = count_repo_occurrences(AK_STREAM_REGEX, AK_STREAM_IGNORED_FILES)
         core_file = count_repo_occurrences(CORE_FILE_REGEX, CORE_FILE_IGNORED_FILES)
-        ak_stream = count_repo_occurrences(AK_STREAM_REGEX, AK_STREAM_IGNORED_FILES)
+        ak_stream = count_repo_occurrences(AK_DEPRECATED_STREAM_REGEX, AK_DEPRECATED_STREAM_IGNORED_FILES)
         c_file = count_repo_occurrences(C_FILE_REGEX, C_FILE_IGNORED_FILES)
         time_done_counting = time.time()
         cache[commit] = stream_file, core_file, ak_stream, c_file
@@ -153,9 +153,9 @@ def write_graphs(most_recent_commit):
 
     print_lines = """ \
         "tagged_history.csv" \
-           using 1:2 lw 2 title "Core::Stream", \
+           using 1:2 lw 2 title "AK::Stream (fka Core::Stream)", \
         '' using 1:3 lw 1 title "Core::File", \
-        '' using 1:4 lw 1 title "AK::Stream", \
+        '' using 1:4 lw 1 title "AK::DeprecatedStream", \
         '' using 1:5 lw 1 title "C FILE*", \
         '< tail -n 1 tagged_history.csv' using 1:2:2 with labels right point linecolor 1 pointtype 7 offset -2,-.5 notitle, \
         '< tail -n 1 tagged_history.csv' using 1:3:3 with labels right point linecolor 2 pointtype 7 offset -2,0 notitle, \
@@ -165,9 +165,9 @@ def write_graphs(most_recent_commit):
     # that's a pretty awful delta cuz it still works per commit rather than per day/whatever but eeeeeehhhhhhh it's good enough for me
     print_delta = """ \
         "tagged_history.csv" \
-           using 1:(delta_v($2)) with boxes title "Core::Stream", \
+           using 1:(delta_v($2)) with boxes title "AK::Stream (fka Core::Stream)", \
         '' using 1:(delta_v($3)) with boxes title "Core::File", \
-        '' using 1:(delta_v($4)) with boxes title "AK::Stream", \
+        '' using 1:(delta_v($4)) with boxes title "AK::DeprecatedStream", \
         '' using 1:(delta_v($5)) with boxes title "C FILE*"
     """
 
@@ -247,7 +247,7 @@ def write_file_list():
 
     text = "<div class=streams>"
     text += build_table("Core::File", count_file_occurrences(CORE_FILE_REGEX, CORE_FILE_IGNORED_FILES))
-    text += build_table("AK::Stream", count_file_occurrences(AK_STREAM_REGEX, AK_STREAM_IGNORED_FILES))
+    text += build_table("AK::DeprecatedStream", count_file_occurrences(AK_DEPRECATED_STREAM_REGEX, AK_DEPRECATED_STREAM_IGNORED_FILES))
     text += build_table("C FILE*", count_file_occurrences(C_FILE_REGEX, C_FILE_IGNORED_FILES))
     text += "</div>"
 
