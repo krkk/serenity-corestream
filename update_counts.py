@@ -15,7 +15,7 @@ SAVE_CACHE_INV_FREQ = 50
 
 AK_STREAM_REGEX = "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream"
 CORE_FILE_REGEX = "(CFile|Core::File)([&>]|::(open|construct))" # there's also try_create() from C_OBJECT macro but thank god nobody used it
-AK_DEPRECATED_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex|Constrained|Reconsumable)(Bit|File|Memory|)Stream"
+AK_DEPRECATED_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex)(Bit|File|Memory|)Stream"
 C_FILE_REGEX = "fopen|fdopen|FILE\\*" # don't count stdout, stderr and stdin. there's too much of them
 
 AK_STREAM_IGNORED_FILES = [ "AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "Tests/AK/*Stream.cpp", "Tests/LibCore/*Stream.cpp", "AK/Forward.h" ]
