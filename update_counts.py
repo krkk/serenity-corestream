@@ -158,8 +158,7 @@ def write_graphs(most_recent_commit):
         '' using 1:4 lw 1 title "AK::DeprecatedStream", \
         '' using 1:5 lw 1 title "C FILE*", \
         '< tail -n 1 tagged_history.csv' using 1:2:2 with labels right point linecolor 1 pointtype 7 offset -2,-.5 notitle, \
-        '< tail -n 1 tagged_history.csv' using 1:3:3 with labels right point linecolor 2 pointtype 7 offset -2,0 notitle, \
-        '< tail -n 1 tagged_history.csv' using 1:4:4 with labels right point linecolor 3 pointtype 7 offset -2,0 notitle
+        '< tail -n 1 tagged_history.csv' using 1:3:3 with labels right point linecolor 2 pointtype 7 offset -2,0 notitle
     """
 
     # that's a pretty awful delta cuz it still works per commit rather than per day/whatever but eeeeeehhhhhhh it's good enough for me
