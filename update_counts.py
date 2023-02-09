@@ -79,7 +79,7 @@ def save_cache(cache):
 
 def count_repo_occurrences(regex_search, ignored_files):
     result = subprocess.run(
-        ["git", "-C", SERENITY_DIR, "grep", "-wE", regex_search, "--" ] + list(map(lambda x: f":!{x}", ignored_files)),
+        ["git", "-C", SERENITY_DIR, "grep", "-wIE", regex_search, "--" ] + list(map(lambda x: f":!{x}", ignored_files)),
         capture_output=True,
         text=True,
     )
@@ -90,7 +90,7 @@ def count_repo_occurrences(regex_search, ignored_files):
 
 def count_file_occurrences(regex_search, ignored_files):
     result = subprocess.run(
-        ["git", "-C", SERENITY_DIR, "grep", "-wcE", regex_search, "--" ] + list(map(lambda x: f":!{x}", ignored_files)),
+        ["git", "-C", SERENITY_DIR, "grep", "-wcIE", regex_search, "--" ] + list(map(lambda x: f":!{x}", ignored_files)),
         capture_output=True,
         text=True,
     )
