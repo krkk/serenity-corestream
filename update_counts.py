@@ -19,7 +19,7 @@ AK_DEPRECATED_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex)(Bit|
 C_FILE_REGEX = "fopen|fdopen|FILE\\*" # don't count stdout, stderr and stdin. there's too much of them
 
 AK_STREAM_IGNORED_FILES = [ "AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "Tests/AK/*Stream.cpp", "Tests/LibCore/*Stream.cpp", "AK/Forward.h" ]
-CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp" ]
+CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp", "Userland/Libraries/LibCpp/Tests/parser" ]
 AK_DEPRECATED_STREAM_IGNORED_FILES = [ "AK/*Stream.*", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "AK/Forward.h", "Ports", "*.java", "*.dockerfile" ]
 C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
