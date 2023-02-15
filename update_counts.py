@@ -13,13 +13,27 @@ FILENAME_CACHE = "cache.json"
 # Save the cache only every X commits, instead of after every commit.
 SAVE_CACHE_INV_FREQ = 50
 
-AK_STREAM_REGEX = "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream"
-CORE_FILE_REGEX = "(CFile|Core::File)([&>]|::(open|construct))" # there's also try_create() from C_OBJECT macro but thank god nobody used it
-AK_DEPRECATED_STREAM_REGEX = "(Deprecated|)(Input|Output|(Circular|)Duplex)(Bit|File|Memory|)Stream"
-C_FILE_REGEX = "fopen|fdopen|FILE\\*" # don't count stdout, stderr and stdin. there's too much of them
+REGEXES = [
+    {
+        # committer timestamp of "LibCore: Rename File to DeprecatedFile" d43a7eae545cd699f301471bd0f82399174339c1
+        'valid_until': 1676249407,
+        'ak_stream': "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream",
+        'core_deprecated_file': "(CFile|Core::File)([&>]|::(open|construct))",
+        'ak_deprecated_stream': "(Deprecated|)(Input|Output|(Circular|)Duplex)(Bit|File|Memory|)Stream",
+        'c_file': "fopen|fdopen|FILE\\*",  # don't count stdout, stderr and stdin. there's too much of them
+    },
+    {
+        'ak_stream': "(Allocating|Fixed)MemoryStream|(Big|Little)Endian(Input|Output)BitStream|SeekableStream|(AK|Core)::Stream|Stream[>&]|Core::(Buffered|)((Local|Reusable|TCP|UDP|)Socket|File)",
+        'core_deprecated_file': "Core::DeprecatedFile([&>]|::(open|construct))",
+        'ak_deprecated_stream': "(Deprecated|)(Input|Output|(Circular|)Duplex)(Bit|File|Memory|)Stream",
+        'c_file': "fopen|fdopen|FILE\\*",
+    }
+]
+
+ACTIVE_REGEX_SET = 0
 
 AK_STREAM_IGNORED_FILES = [ "AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "Tests/AK/*Stream.cpp", "Tests/LibCore/*Stream.cpp", "AK/Forward.h" ]
-CORE_FILE_IGNORED_FILES = [ "Tests/LibCore/TestLibCoreIODevice.cpp", "Userland/Libraries/LibCpp/Tests/parser" ]
+CORE_FILE_IGNORED_FILES = [ "Userland/Libraries/LibCore/*File.*", "Tests/LibCore/TestLibCoreIODevice.cpp", "Userland/Libraries/LibCpp/Tests/parser" ]
 AK_DEPRECATED_STREAM_IGNORED_FILES = [ "AK/*Stream.*", "Tests/AK/*Stream.cpp", "Userland/Libraries/LibCore/*Stream.*", "AK/Forward.h", "Ports", "*.java", "*.dockerfile" ]
 C_FILE_IGNORED_FILES = [ "Userland/Libraries/LibC", "Libraries/LibC", "LibC", "Tests/LibC", "Ports", "*.sh", "*.py", "*.md", "*.yml" ]
 
@@ -40,7 +54,7 @@ def determine_commit_and_date_list():
             # generate a list of commits that match our regexes
             # this makes the cache size MUCH smaller (needs to store ~1000 commits instead of a full commit history - 45k).
             # however, the script startup time is slow.
-            f"-G{AK_STREAM_REGEX}|{CORE_FILE_REGEX}|{AK_DEPRECATED_STREAM_REGEX}|{CORE_FILE_REGEX}|{C_FILE_REGEX}"
+            f"-G{REGEXES[1]['ak_stream']}|{REGEXES[0]['core_deprecated_file']}|{REGEXES[1]['core_deprecated_file']}|{REGEXES[1]['ak_deprecated_stream']}|{REGEXES[1]['c_file']}"
             "origin/master",
             "--reverse",
             "--format=%H %ct",
@@ -102,16 +116,23 @@ def count_file_occurrences(regex_search, ignored_files):
 
 def lookup_commit(commit, date, cache):
     if commit in cache:
-        stream_file, core_file, ak_stream, c_file = cache[commit]
+        ak_stream, core_deprecated_file, ak_deprecated_stream, c_file = cache[commit]
     else:
         time_start = time.time()
         subprocess.run(["git", "-C", SERENITY_DIR, "checkout", "-q", commit], check=True)
-        stream_file = count_repo_occurrences(AK_STREAM_REGEX, AK_STREAM_IGNORED_FILES)
-        core_file = count_repo_occurrences(CORE_FILE_REGEX, CORE_FILE_IGNORED_FILES)
-        ak_stream = count_repo_occurrences(AK_DEPRECATED_STREAM_REGEX, AK_DEPRECATED_STREAM_IGNORED_FILES)
-        c_file = count_repo_occurrences(C_FILE_REGEX, C_FILE_IGNORED_FILES)
+
+        global ACTIVE_REGEX_SET
+        if 'valid_until' in REGEXES[ACTIVE_REGEX_SET] and REGEXES[ACTIVE_REGEX_SET]['valid_until'] <= date:
+            ACTIVE_REGEX_SET += 1
+            print(f"Changing ACTIVE_REGEX_SET to {ACTIVE_REGEX_SET}")
+        regex_set = REGEXES[ACTIVE_REGEX_SET]
+
+        ak_stream = count_repo_occurrences(regex_set['ak_stream'], AK_STREAM_IGNORED_FILES)
+        core_deprecated_file = count_repo_occurrences(regex_set['core_deprecated_file'], CORE_FILE_IGNORED_FILES)
+        ak_deprecated_stream = count_repo_occurrences(regex_set['ak_deprecated_stream'], AK_DEPRECATED_STREAM_IGNORED_FILES)
+        c_file = count_repo_occurrences(regex_set['c_file'], C_FILE_IGNORED_FILES)
         time_done_counting = time.time()
-        cache[commit] = stream_file, core_file, ak_stream, c_file
+        cache[commit] = ak_stream, core_deprecated_file, ak_deprecated_stream, c_file
         if len(cache) % SAVE_CACHE_INV_FREQ == 0:
             print("    (actually saving cache)")
             save_cache(cache)
@@ -122,15 +143,15 @@ def lookup_commit(commit, date, cache):
     human_readable_time = datetime.datetime.fromtimestamp(date).strftime(
         "%Y-%m-%d %H:%M:%S"
     )
-    return dict(
-        commit=commit,
-        unix_timestamp=date,
-        human_readable_time=human_readable_time,
-        stream_file=stream_file,
-        core_file=core_file,
-        ak_stream=ak_stream,
-        c_file=c_file,
-    )
+    return {
+        'commit': commit,
+        'unix_timestamp': date,
+        'human_readable_time': human_readable_time,
+        'stream_file': ak_stream,
+        'core_file': core_deprecated_file,
+        'ak_stream': ak_deprecated_stream,
+        'c_file': c_file,
+    }
 
 
 def write_graphs(most_recent_commit):
@@ -245,9 +266,9 @@ def write_file_list():
         template = fp.read()
 
     text = "<div class=streams>"
-    text += build_table("Core::File", count_file_occurrences(CORE_FILE_REGEX, CORE_FILE_IGNORED_FILES))
-    text += build_table("AK::DeprecatedStream", count_file_occurrences(AK_DEPRECATED_STREAM_REGEX, AK_DEPRECATED_STREAM_IGNORED_FILES))
-    text += build_table("C FILE*", count_file_occurrences(C_FILE_REGEX, C_FILE_IGNORED_FILES))
+    text += build_table("Core::File", count_file_occurrences(REGEXES[-1]['core_deprecated_file'], CORE_FILE_IGNORED_FILES))
+    text += build_table("AK::DeprecatedStream", count_file_occurrences(REGEXES[-1]['ak_deprecated_stream'], AK_DEPRECATED_STREAM_IGNORED_FILES))
+    text += build_table("C FILE*", count_file_occurrences(REGEXES[-1]['c_file'], C_FILE_IGNORED_FILES))
     text += "</div>"
 
     with open("index.html", "w") as fp:
