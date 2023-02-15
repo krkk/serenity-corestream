@@ -175,8 +175,8 @@ def write_graphs(most_recent_commit):
     print_lines = """ \
         "tagged_history.csv" \
            using 1:2 lw 2 title "AK::Stream (fka Core::Stream)", \
-        '' using 1:3 lw 1 title "Core::File", \
-        '' using 1:4 lw 1 title "AK::DeprecatedStream", \
+        '' using 1:3 lw 1 title "Core::DeprecatedFile", \
+        '' using 1:4 lw 1 title "AK::DeprecatedStream {/:Italic (removed)}", \
         '' using 1:5 lw 1 title "C FILE*", \
         '< tail -n 1 tagged_history.csv' using 1:2:2 with labels right point linecolor 1 pointtype 7 offset -2,-.5 notitle, \
         '< tail -n 1 tagged_history.csv' using 1:3:3 with labels right point linecolor 2 pointtype 7 offset -2,0 notitle
@@ -186,8 +186,8 @@ def write_graphs(most_recent_commit):
     print_delta = """ \
         "tagged_history.csv" \
            using 1:(delta_v($2)) with boxes title "AK::Stream (fka Core::Stream)", \
-        '' using 1:(delta_v($3)) with boxes title "Core::File", \
-        '' using 1:(delta_v($4)) with boxes title "AK::DeprecatedStream", \
+        '' using 1:(delta_v($3)) with boxes title "Core::DeprecatedFile", \
+        '' using 1:(delta_v($4)) with boxes title "AK::DeprecatedStream {/:Italic (removed)}", \
         '' using 1:(delta_v($5)) with boxes title "C FILE*"
     """
 
@@ -266,7 +266,7 @@ def write_file_list():
         template = fp.read()
 
     text = "<div class=streams>"
-    text += build_table("Core::File", count_file_occurrences(REGEXES[-1]['core_deprecated_file'], CORE_FILE_IGNORED_FILES))
+    text += build_table("Core::DeprecatedFile", count_file_occurrences(REGEXES[-1]['core_deprecated_file'], CORE_FILE_IGNORED_FILES))
     text += build_table("AK::DeprecatedStream", count_file_occurrences(REGEXES[-1]['ak_deprecated_stream'], AK_DEPRECATED_STREAM_IGNORED_FILES))
     text += build_table("C FILE*", count_file_occurrences(REGEXES[-1]['c_file'], C_FILE_IGNORED_FILES))
     text += "</div>"
